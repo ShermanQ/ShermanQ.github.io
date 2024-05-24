@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Downloader</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .container { max-width: 500px; margin: 0 auto; }
+    label { display: block; margin-top: 10px; }
+    input, select, button { width: 100%; padding: 10px; margin-top: 5px; }
+    button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Music Downloader</h1>
+    <label for="songName">Song Name</label>
+    <input type="text" id="songName" placeholder="Enter song name" required>
+    
+    <label for="source">Music Source</label>
+    <select id="source">
+      <option value="kw">Kuwo</option>
+      <option value="kg">Kugou</option>
+      <option value="tx">QQ Music</option>
+      <option value="wy">NetEase</option>
+      <option value="mg">Migu</option>
+    </select>
+    
+    <label for="quality">Quality</label>
+    <select id="quality">
+      <option value="128k">128k</option>
+      <option value="320k">320k</option>
+      <option value="flac">FLAC</option>
+      <option value="flac24bit">FLAC 24bit</option>
+    </select>
+    
+    <button onclick="downloadMusic()">Download</button>
+  </div>
+
+  <script>
+    async function downloadMusic() {
+      const songName = document.getElementById('songName').value;
+      const source = document.getElementById('source').value;
+      const quality = document.getElementById('quality').value;
+
+      if (!songName) {
+        alert('Please enter a song name');
+        return;
+      }
+
+      try {
+        const searchApiUrl = `https://api.khkj6.com/music/qq.php?name=${encodeURIComponent(songName)}&page=1`;
+        const searchResponse = await fetch(searchApiUrl);
+        const searchData = await searchResponse.json();
+
+        if (searchData.code !== 200 || searchData.data.length === 0) {
+          alert('Song not found');
+          return;
+        }
+
+        const songId = searchData.data[0].id;
+        const songTitle = searchData.data[0].name;
+
+        const musicApiUrl = `https://lxmusic.ikunshare.com:9763/url/${source}/${songId}/${quality}`;
+        const musicResponse = await fetch(musicApiUrl, {
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'lx-music-request/1.0',
+            'X-Request-Key': 'ikunsource'
+          }
+        });
+        const musicData = await musicResponse.json();
+
+        if (musicData.code !== 0) {
+          alert('Failed to get music URL');
+          return;
+        }
+
+        const downloadUrl = musicData.data;
+        window.open(downloadUrl, '_blank');
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+      }
+    }
+  </script>
+</body>
+</html>
